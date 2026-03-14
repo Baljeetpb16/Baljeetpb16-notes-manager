@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "copilot/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Copy .env for CI
+        run: cp .env.example .env
+
+      - name: Django system check
+        run: python manage.py check
+        env:
+          SECRET_KEY: ci-secret-key
+          DEBUG: "True"
+          ALLOWED_HOSTS: localhost
+
+      - name: Run lint (ruff)
+        run: ruff check .
+
+      - name: Run tests
+        run: python manage.py test
+        env:
+          SECRET_KEY: ci-secret-key
+          DEBUG: "True"
+          ALLOWED_HOSTS: localhost

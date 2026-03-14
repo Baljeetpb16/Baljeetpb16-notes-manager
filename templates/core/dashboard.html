@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – NoteNest{% endblock %}
+{% block content %}
+<h2 class="mb-4">Dashboard</h2>
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="card stat-card">
+      <div class="display-5">{{ note_count }}</div>
+      <div class="text-muted mt-1">My Notes</div>
+      <a href="{% url 'notes:list' %}" class="btn btn-sm btn-outline-primary mt-2">View All</a>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card stat-card">
+      <div class="display-5">{{ assignment_count }}</div>
+      <div class="text-muted mt-1">Assignments</div>
+      <a href="{% url 'assignments:list' %}" class="btn btn-sm btn-outline-primary mt-2">View All</a>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card stat-card">
+      <div class="display-5 text-warning">{{ pending_count }}</div>
+      <div class="text-muted mt-1">Pending</div>
+      <a href="{% url 'assignments:list' %}?status=pending" class="btn btn-sm btn-outline-warning mt-2">View Pending</a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Recent Notes -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-file-earmark-text me-1"></i>Recent Notes</span>
+        <a href="{% url 'notes:add' %}" class="btn btn-sm btn-primary">
+          <i class="bi bi-plus"></i> Add
+        </a>
+      </div>
+      <div class="card-body p-0">
+        {% if recent_notes %}
+          <ul class="list-group list-group-flush">
+            {% for note in recent_notes %}
+              <li class="list-group-item">
+                <a href="{% url 'notes:detail' note.pk %}" class="text-decoration-none">{{ note.title }}</a>
+                <span class="badge bg-secondary badge-tag ms-1">{{ note.subject }}</span>
+                <span class="float-end text-muted small">{{ note.created_at|date:"d M" }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted p-3 mb-0">No notes yet. <a href="{% url 'notes:add' %}">Upload one!</a></p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Assignments -->
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-check2-square me-1"></i>Recent Assignments</span>
+        <a href="{% url 'assignments:add' %}" class="btn btn-sm btn-primary">
+          <i class="bi bi-plus"></i> Add
+        </a>
+      </div>
+      <div class="card-body p-0">
+        {% if recent_assignments %}
+          <ul class="list-group list-group-flush">
+            {% for a in recent_assignments %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>{{ a.title }}</span>
+                <span>
+                  {% if a.status == "done" %}
+                    <span class="badge bg-success">Done</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                  {% endif %}
+                  <span class="text-muted small ms-1">{{ a.due_date|date:"d M" }}</span>
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted p-3 mb-0">No assignments yet. <a href="{% url 'assignments:add' %}">Add one!</a></p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

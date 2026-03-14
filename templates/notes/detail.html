@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ note.title }} – NoteNest{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <a href="{% url 'notes:list' %}" class="btn btn-sm btn-outline-secondary mb-3">
+      <i class="bi bi-arrow-left me-1"></i>Back to Notes
+    </a>
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ note.title }}</h5>
+        {% if note.visibility == "public" %}
+          <span class="badge bg-success">Public</span>
+        {% else %}
+          <span class="badge bg-secondary">Private</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-3">Subject</dt>
+          <dd class="col-sm-9">{{ note.subject }}</dd>
+
+          <dt class="col-sm-3">Semester</dt>
+          <dd class="col-sm-9">{{ note.subject.semester }}</dd>
+
+          <dt class="col-sm-3">Tags</dt>
+          <dd class="col-sm-9">
+            {% for tag in note.tag_list %}
+              <span class="badge bg-light text-dark border badge-tag">{{ tag }}</span>
+            {% empty %}
+              <span class="text-muted">—</span>
+            {% endfor %}
+          </dd>
+
+          <dt class="col-sm-3">Uploaded</dt>
+          <dd class="col-sm-9">{{ note.created_at|date:"d M Y, H:i" }}</dd>
+
+          <dt class="col-sm-3">File</dt>
+          <dd class="col-sm-9">
+            <a href="{{ note.file.url }}" class="btn btn-sm btn-outline-primary note-file-link" download>
+              <i class="bi bi-download me-1"></i>Download
+            </a>
+          </dd>
+        </dl>
+        <hr />
+        <a href="{% url 'notes:delete' note.pk %}" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash me-1"></i>Delete Note
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
