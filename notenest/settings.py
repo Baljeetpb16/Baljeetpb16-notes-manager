@@ -13,7 +13,17 @@ env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
 )
+import os
+from django.contrib.auth import get_user_model
 
+username = os.environ.get("DJANGO_SUPERUSER_USERNAME")
+email = os.environ.get("DJANGO_SUPERUSER_EMAIL")
+password = os.environ.get("DJANGO_SUPERUSER_PASSWORD")
+
+if username and password:
+    User = get_user_model()
+    if not User.objects.filter(username=username).exists():
+        User.objects.create_superuser(username=username, email, password)
 # Read .env file if it exists
 environ.Env.read_env(BASE_DIR / ".env")
 
