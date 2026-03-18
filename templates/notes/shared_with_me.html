@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Shared With Me – NoteNest{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0"><i class="bi bi-inbox me-2"></i>Shared With Me</h4>
+</div>
+
+{% if shares %}
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Note</th>
+          <th>Subject</th>
+          <th>Shared by</th>
+          <th>Tags</th>
+          <th>Shared on</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for share in shares %}
+          <tr>
+            <td><a href="{% url 'notes:shared_note_detail' share.note.pk %}">{{ share.note.title }}</a></td>
+            <td>{{ share.note.subject }}</td>
+            <td>{{ share.note.uploaded_by.username }}</td>
+            <td>
+              {% for tag in share.note.tag_list %}
+                <span class="badge bg-light text-dark border">{{ tag }}</span>
+              {% empty %}
+                <span class="text-muted">—</span>
+              {% endfor %}
+            </td>
+            <td>{{ share.shared_at|date:"d M Y" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-inbox fs-1"></i>
+    <p class="mt-2">No notes have been shared with you yet.</p>
+  </div>
+{% endif %}
+{% endblock %}
