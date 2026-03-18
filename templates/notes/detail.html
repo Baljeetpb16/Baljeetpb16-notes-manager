@@ -43,9 +43,14 @@
           </dd>
         </dl>
         <hr />
-        <a href="{% url 'notes:delete' note.pk %}" class="btn btn-sm btn-outline-danger">
-          <i class="bi bi-trash me-1"></i>Delete Note
-        </a>
+        <div class="d-flex gap-2">
+          <a href="{% url 'notes:generate_questions' note.pk %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-lightbulb me-1"></i>Generate Questions
+          </a>
+          <a href="{% url 'notes:delete' note.pk %}" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-trash me-1"></i>Delete Note
+          </a>
+        </div>
       </div>
     </div>
   </div>

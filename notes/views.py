@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import NoteFilterForm, NoteForm
 from .models import Note
+from .questions_generator import generate_questions_for_note
 
 
 @login_required
@@ -81,3 +82,23 @@ def note_delete(request, pk):
         note.delete()
         return redirect("notes:list")
     return render(request, "notes/confirm_delete.html", {"note": note})
+
+
+@login_required
+def note_generate_questions(request, pk):
+    note = get_object_or_404(Note, pk=pk, uploaded_by=request.user)
+    questions = None
+    error = None
+
+    if request.method == "POST":
+        try:
+            questions = generate_questions_for_note(note)
+        except (ValueError, RuntimeError) as exc:
+            error = str(exc)
+
+    return render(
+        request,
+        "notes/questions.html",
+        {"note": note, "questions": questions, "error": error},
+    )
+
