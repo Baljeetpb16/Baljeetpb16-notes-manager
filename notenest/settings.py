@@ -3,6 +3,7 @@ Django settings for notenest project.
 """
 
 from pathlib import Path
+
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -106,3 +107,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
+
+# Hugging Face Inference API key (optional – leave blank to skip AI question generation)
+HUGGINGFACE_API_KEY = env("HUGGINGFACE_API_KEY", default="")

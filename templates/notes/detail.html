@@ -69,6 +69,9 @@
           <a href="{% url 'notes:summarize' note.pk %}" class="btn btn-sm btn-outline-info">
             <i class="bi bi-card-text me-1"></i>Summarize
           </a>
+          <a href="{% url 'notes:generate_questions' note.pk %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-lightbulb me-1"></i>Generate Questions
+          </a>
           <div class="dropdown">
             <button class="btn btn-sm btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
               <i class="bi bi-download me-1"></i>Export

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Generate Questions – {{ note.title }} – NoteNest{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <a href="{% url 'notes:detail' note.pk %}" class="btn btn-sm btn-outline-secondary mb-3">
+      <i class="bi bi-arrow-left me-1"></i>Back to Note
+    </a>
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-lightbulb me-2"></i>Generate Important Questions
+        </h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3">
+          Click the button below to generate important exam questions from
+          <strong>{{ note.title }}</strong> using AI.
+        </p>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-stars me-1"></i>Generate Questions
+          </button>
+        </form>
+      </div>
+    </div>
+
+    {% if error %}
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-1"></i>{{ error }}
+      </div>
+    {% endif %}
+
+    {% if questions is not None %}
+      {% if questions %}
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0">
+              <i class="bi bi-question-circle me-2"></i>Important Questions
+              <span class="badge bg-primary ms-2">{{ questions|length }}</span>
+            </h6>
+          </div>
+          <ul class="list-group list-group-flush">
+            {% for question in questions %}
+              <li class="list-group-item">
+                <span class="badge bg-secondary me-2">{{ forloop.counter }}</span>
+                {{ question }}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% else %}
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-1"></i>
+          No questions could be generated. Make sure your note file contains sufficient text.
+        </div>
+      {% endif %}
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
