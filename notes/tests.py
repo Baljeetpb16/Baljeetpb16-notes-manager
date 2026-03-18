@@ -135,6 +135,55 @@ class NoteViewsTest(TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
+class NoteEditViewTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="u1", password="pass1234!")
+        self.subject = Subject.objects.create(name="Chem", semester=3)
+        self.client.login(username="u1", password="pass1234!")
+        self.note = Note.objects.create(
+            title="Original Title",
+            subject=self.subject,
+            content="Original content.",
+            tags="old",
+            uploaded_by=self.user,
+        )
+
+    def test_edit_get(self):
+        resp = self.client.get(reverse("notes:edit", args=[self.note.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context["note"], self.note)
+
+    def test_edit_post_updates_note(self):
+        resp = self.client.post(
+            reverse("notes:edit", args=[self.note.pk]),
+            {
+                "title": "Updated Title",
+                "subject": self.subject.pk,
+                "tags": "new,updated",
+                "content": "Updated content.",
+                "visibility": "public",
+            },
+        )
+        self.assertRedirects(resp, reverse("notes:detail", args=[self.note.pk]))
+        self.note.refresh_from_db()
+        self.assertEqual(self.note.title, "Updated Title")
+        self.assertEqual(self.note.content, "Updated content.")
+        self.assertEqual(self.note.visibility, "public")
+
+    def test_edit_other_user_forbidden(self):
+        other = User.objects.create_user(username="u2", password="pass5678!")
+        note = Note.objects.create(
+            title="Other", subject=self.subject, uploaded_by=other
+        )
+        resp = self.client.get(reverse("notes:edit", args=[note.pk]))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_edit_requires_login(self):
+        self.client.logout()
+        resp = self.client.get(reverse("notes:edit", args=[self.note.pk]))
+        self.assertEqual(resp.status_code, 302)
+
+
 class NoteSummarizeViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="u1", password="pass1234!")

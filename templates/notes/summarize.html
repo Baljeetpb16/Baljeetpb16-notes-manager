@@ -12,7 +12,13 @@
       </div>
       <div class="card-body">
         {% if note.content %}
-          {% if summary %}
+          {% if too_short %}
+            <div class="alert alert-info mb-3">
+              <i class="bi bi-info-circle me-1"></i>
+              The note content is too short to summarize further. The full text is shown below.
+            </div>
+            <p class="text-pre-wrap">{{ note.content }}</p>
+          {% elif summary %}
             <h6 class="fw-semibold mb-2">Auto-generated Summary</h6>
             <p class="lead">{{ summary }}</p>
             <hr />

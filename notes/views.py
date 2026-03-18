@@ -79,6 +79,19 @@ def note_detail(request, pk):
 
 
 @login_required
+def note_edit(request, pk):
+    note = get_object_or_404(Note, pk=pk, uploaded_by=request.user)
+    if request.method == "POST":
+        form = NoteForm(request.POST, request.FILES, instance=note)
+        if form.is_valid():
+            form.save()
+            return redirect("notes:detail", pk=note.pk)
+    else:
+        form = NoteForm(instance=note)
+    return render(request, "notes/edit.html", {"form": form, "note": note})
+
+
+@login_required
 def note_delete(request, pk):
     note = get_object_or_404(Note, pk=pk, uploaded_by=request.user)
     if request.method == "POST":
@@ -96,8 +109,19 @@ def note_delete(request, pk):
 @login_required
 def note_summarize(request, pk):
     note = get_object_or_404(Note, pk=pk, uploaded_by=request.user)
-    summary = summarize(note.content) if note.content else ""
-    return render(request, "notes/summarize.html", {"note": note, "summary": summary})
+    summary = ""
+    too_short = False
+    if note.content:
+        summary = summarize(note.content)
+        # If the summarizer returned the full content unchanged, the text is too
+        # short to condense further — surface this to the user.
+        if summary and summary.strip() == note.content.strip():
+            too_short = True
+    return render(
+        request,
+        "notes/summarize.html",
+        {"note": note, "summary": summary, "too_short": too_short},
+    )
 
 
 # ---------------------------------------------------------------------------
