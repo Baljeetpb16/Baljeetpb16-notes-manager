@@ -159,6 +159,33 @@ class ApiIntegrationTest(TestCase):
                 result = generate_questions_from_text("")
         self.assertEqual(result, [])
 
+    @override_settings(HUGGINGFACE_API_KEY="")
+    def test_summarize_missing_api_key_raises(self):
+        from .api_integration import summarize_text
+
+        with self.assertRaises(RuntimeError):
+            summarize_text("some text")
+
+    @override_settings(HUGGINGFACE_API_KEY="test-key")
+    @patch("notes.api_integration.requests.post")
+    def test_summarize_successful_response(self, mock_post):
+        from .api_integration import summarize_text
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = [{"summary_text": "A concise summary."}]
+        mock_response.raise_for_status.return_value = None
+        mock_post.return_value = mock_response
+
+        result = summarize_text("Long text about photosynthesis and plant biology.")
+        self.assertEqual(result, "A concise summary.")
+
+    def test_summarize_empty_text_returns_empty_string(self):
+        from .api_integration import summarize_text
+
+        with override_settings(HUGGINGFACE_API_KEY="key"):
+            result = summarize_text("")
+        self.assertEqual(result, "")
+
 
 # ---------------------------------------------------------------------------
 # questions generator view tests
@@ -200,3 +227,56 @@ class GenerateQuestionsViewTest(TestCase):
         resp = self.client.post(reverse("notes:generate_questions", args=[self.note.pk]))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "HUGGINGFACE_API_KEY")
+
+
+# ---------------------------------------------------------------------------
+# summarize view tests
+# ---------------------------------------------------------------------------
+
+
+class SummarizeNoteViewTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="suser", password="pass1234!")
+        self.subject = Subject.objects.create(name="Chemistry", semester=2)
+        self.client.login(username="suser", password="pass1234!")
+        f = SimpleUploadedFile(
+            "chem.txt",
+            b"Water is a chemical compound consisting of hydrogen and oxygen.",
+            content_type="text/plain",
+        )
+        self.note = Note.objects.create(
+            title="Chem Notes", subject=self.subject, file=f, uploaded_by=self.user
+        )
+
+    def test_get_page_renders(self):
+        resp = self.client.get(reverse("notes:summarize", args=[self.note.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Summarise")
+
+    def test_requires_login(self):
+        self.client.logout()
+        resp = self.client.get(reverse("notes:summarize", args=[self.note.pk]))
+        self.assertEqual(resp.status_code, 302)
+
+    @override_settings(HUGGINGFACE_API_KEY="test-key")
+    @patch("notes.views.summarize_text")
+    def test_post_returns_summary(self, mock_summarize):
+        mock_summarize.return_value = "Water is H2O, a compound of hydrogen and oxygen."
+        resp = self.client.post(reverse("notes:summarize", args=[self.note.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Water is H2O")
+
+    @override_settings(HUGGINGFACE_API_KEY="")
+    def test_post_without_api_key_shows_error(self):
+        resp = self.client.post(reverse("notes:summarize", args=[self.note.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "HUGGINGFACE_API_KEY")
+
+    def test_unsupported_file_type_shows_error(self):
+        f = SimpleUploadedFile("doc.pdf", b"%PDF-1.4 content", content_type="application/pdf")
+        note = Note.objects.create(
+            title="PDF Note", subject=self.subject, file=f, uploaded_by=self.user
+        )
+        resp = self.client.post(reverse("notes:summarize", args=[note.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Unsupported file type")

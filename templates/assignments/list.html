@@ -61,6 +61,9 @@
                     </button>
                   </form>
                 {% endif %}
+                <a href="{% url 'assignments:summarize' a.pk %}" class="btn btn-sm btn-outline-info" title="Summarise">
+                  <i class="bi bi-file-text"></i>
+                </a>
                 <a href="{% url 'assignments:edit' a.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
                   <i class="bi bi-pencil"></i>
                 </a>

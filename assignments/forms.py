@@ -8,12 +8,13 @@ from .models import Assignment
 class AssignmentForm(forms.ModelForm):
     class Meta:
         model = Assignment
-        fields = ["title", "subject", "due_date", "status"]
+        fields = ["title", "subject", "due_date", "status", "description"]
         widgets = {
             "title": forms.TextInput(attrs={"class": "form-control"}),
             "subject": forms.Select(attrs={"class": "form-select"}),
             "due_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "status": forms.Select(attrs={"class": "form-select"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
         }
 
 

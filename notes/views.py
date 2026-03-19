@@ -2,6 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
+from .api_integration import summarize_text
+from .file_parser import parse_file
 from .forms import NoteFilterForm, NoteForm
 from .models import Note
 from .questions_generator import generate_questions_for_note
@@ -82,6 +84,26 @@ def note_delete(request, pk):
         note.delete()
         return redirect("notes:list")
     return render(request, "notes/confirm_delete.html", {"note": note})
+
+
+@login_required
+def note_summarize(request, pk):
+    note = get_object_or_404(Note, pk=pk, uploaded_by=request.user)
+    summary = None
+    error = None
+
+    if request.method == "POST":
+        try:
+            text = parse_file(note.file)
+            summary = summarize_text(text)
+        except (ValueError, RuntimeError) as exc:
+            error = str(exc)
+
+    return render(
+        request,
+        "notes/summarize.html",
+        {"note": note, "summary": summary, "error": error},
+    )
 
 
 @login_required
