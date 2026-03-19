@@ -14,6 +14,7 @@ class Assignment(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="assignments")
     due_date = models.DateField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
+    description = models.TextField(blank=True, default="")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assignments")
     created_at = models.DateTimeField(auto_now_add=True)
 

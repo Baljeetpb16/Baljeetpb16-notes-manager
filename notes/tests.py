@@ -410,6 +410,33 @@ class ApiIntegrationTest(TestCase):
                 result = generate_questions_from_text("")
         self.assertEqual(result, [])
 
+    @override_settings(HUGGINGFACE_API_KEY="")
+    def test_summarize_missing_api_key_raises(self):
+        from .api_integration import summarize_text
+
+        with self.assertRaises(RuntimeError):
+            summarize_text("some text")
+
+    @override_settings(HUGGINGFACE_API_KEY="test-key")
+    @patch("notes.api_integration.requests.post")
+    def test_summarize_successful_response(self, mock_post):
+        from .api_integration import summarize_text
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = [{"summary_text": "A concise summary."}]
+        mock_response.raise_for_status.return_value = None
+        mock_post.return_value = mock_response
+
+        result = summarize_text("Long text about photosynthesis and plant biology.")
+        self.assertEqual(result, "A concise summary.")
+
+    def test_summarize_empty_text_returns_empty_string(self):
+        from .api_integration import summarize_text
+
+        with override_settings(HUGGINGFACE_API_KEY="key"):
+            result = summarize_text("")
+        self.assertEqual(result, "")
+
 
 # ---------------------------------------------------------------------------
 # questions generator view tests
@@ -451,3 +478,51 @@ class GenerateQuestionsViewTest(TestCase):
         resp = self.client.post(reverse("notes:generate_questions", args=[self.note.pk]))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "HUGGINGFACE_API_KEY")
+
+
+# ---------------------------------------------------------------------------
+# summarize view tests
+# ---------------------------------------------------------------------------
+
+
+class SummarizeNoteViewTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="suser", password="pass1234!")
+        self.subject = Subject.objects.create(name="Chemistry", semester=2)
+        self.client.login(username="suser", password="pass1234!")
+        self.note = Note.objects.create(
+            title="Chem Notes",
+            subject=self.subject,
+            content=(
+                "Photosynthesis converts sunlight into chemical energy stored in glucose. "
+                "Plants use chlorophyll to absorb light. "
+                "The process releases oxygen as a byproduct. "
+                "Carbon dioxide and water are the main inputs. "
+                "The Calvin cycle produces glucose in the stroma."
+            ),
+            uploaded_by=self.user,
+        )
+
+    def test_get_page_renders(self):
+        resp = self.client.get(reverse("notes:summarize", args=[self.note.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Summary")
+
+    def test_requires_login(self):
+        self.client.logout()
+        resp = self.client.get(reverse("notes:summarize", args=[self.note.pk]))
+        self.assertEqual(resp.status_code, 302)
+
+    def test_note_with_content_shows_summary(self):
+        resp = self.client.get(reverse("notes:summarize", args=[self.note.pk]))
+        self.assertEqual(resp.status_code, 200)
+        # The local summarizer should produce some output
+        self.assertContains(resp, "Auto-generated Summary")
+
+    def test_note_without_content_shows_warning(self):
+        note = Note.objects.create(
+            title="Empty Note", subject=self.subject, content="", uploaded_by=self.user
+        )
+        resp = self.client.get(reverse("notes:summarize", args=[note.pk]))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "no text content")

@@ -17,4 +17,5 @@ urlpatterns = [
     path("<int:pk>/share/", views.note_share, name="share"),
     path("<int:pk>/share/<int:share_pk>/remove/", views.note_unshare, name="unshare"),
     path("<int:pk>/questions/", views.note_generate_questions, name="generate_questions"),
+    path("<int:pk>/summarize/", views.note_summarize, name="summarize"),
 ]

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Summarise – {{ assignment.title }} – NoteNest{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <a href="{% url 'assignments:list' %}" class="btn btn-sm btn-outline-secondary mb-3">
+      <i class="bi bi-arrow-left me-1"></i>Back to Assignments
+    </a>
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="bi bi-file-text me-2"></i>Summarise Assignment
+        </h5>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-3">
+          <dt class="col-sm-3">Title</dt>
+          <dd class="col-sm-9">{{ assignment.title }}</dd>
+          <dt class="col-sm-3">Subject</dt>
+          <dd class="col-sm-9">{{ assignment.subject }}</dd>
+          <dt class="col-sm-3">Due Date</dt>
+          <dd class="col-sm-9">{{ assignment.due_date|date:"d M Y" }}</dd>
+          <dt class="col-sm-3">Status</dt>
+          <dd class="col-sm-9">
+            {% if assignment.status == "done" %}
+              <span class="badge bg-success">Done</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">Pending</span>
+            {% endif %}
+          </dd>
+          {% if assignment.description %}
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">{{ assignment.description }}</dd>
+          {% endif %}
+        </dl>
+        <p class="text-muted mb-3">
+          Click the button below to generate a concise summary of this assignment using AI.
+        </p>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-stars me-1"></i>Summarise
+          </button>
+        </form>
+      </div>
+    </div>
+
+    {% if error %}
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-1"></i>{{ error }}
+      </div>
+    {% endif %}
+
+    {% if summary is not None %}
+      {% if summary %}
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0">
+              <i class="bi bi-card-text me-2"></i>Summary
+            </h6>
+          </div>
+          <div class="card-body">
+            <p class="mb-0">{{ summary }}</p>
+          </div>
+        </div>
+      {% else %}
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-1"></i>
+          No summary could be generated.
+        </div>
+      {% endif %}
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

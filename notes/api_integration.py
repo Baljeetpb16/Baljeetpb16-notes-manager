@@ -1,4 +1,4 @@
-"""Send text to the Hugging Face Inference API and retrieve generated questions."""
+"""Send text to the Hugging Face Inference API and retrieve generated questions or summaries."""
 
 import logging
 
@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 # Model used for question generation (free, public Hugging Face model).
 HF_MODEL = "vblagoje/bart_lfqa"
 HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
+
+# Model used for text summarization (free, public Hugging Face model).
+HF_SUMMARIZATION_MODEL = "facebook/bart-large-cnn"
+HF_SUMMARIZATION_URL = f"https://api-inference.huggingface.co/models/{HF_SUMMARIZATION_MODEL}"
 
 # Maximum number of characters of source text to send in a single request.
 MAX_TEXT_LENGTH = 1500
@@ -69,6 +73,54 @@ def generate_questions_from_text(text: str) -> list[str]:
         raw = ""
 
     return _parse_questions(raw)
+
+
+def summarize_text(text: str) -> str:
+    """Call the Hugging Face Inference API and return a summary string.
+
+    Uses the ``facebook/bart-large-cnn`` model which is free and publicly
+    available on Hugging Face.  The function trims *text* to
+    ``MAX_TEXT_LENGTH`` characters before sending to stay within model limits.
+
+    Raises ``RuntimeError`` if the API key is missing or the request fails.
+    """
+    api_key = getattr(settings, "HUGGINGFACE_API_KEY", "")
+    if not api_key:
+        raise RuntimeError(
+            "HUGGINGFACE_API_KEY is not configured. "
+            "Add it to your .env file to use the summarization feature."
+        )
+
+    trimmed = text[:MAX_TEXT_LENGTH].strip()
+    if not trimmed:
+        return ""
+
+    headers = {"Authorization": f"Bearer {api_key}"}
+    payload = {
+        "inputs": trimmed,
+        "parameters": {
+            "max_length": 200,
+            "min_length": 30,
+            "do_sample": False,
+        },
+    }
+
+    try:
+        response = requests.post(
+            HF_SUMMARIZATION_URL, headers=headers, json=payload, timeout=REQUEST_TIMEOUT
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        logger.error("Hugging Face summarization API request failed: %s", exc)
+        raise RuntimeError(f"API request failed: {exc}") from exc
+
+    data = response.json()
+
+    if isinstance(data, list) and data:
+        return data[0].get("summary_text", "")
+    if isinstance(data, dict):
+        return data.get("summary_text", "")
+    return ""
 
 
 def _parse_questions(text: str) -> list[str]:
