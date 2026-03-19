@@ -11,6 +11,9 @@ Built as a college project using GitHub Student Developer Pack (DigitalOcean hos
 - **Notes** – upload files (PDF/images), add tags/subject/semester, search and filter
 - **Assignments** – create assignments with due dates, mark done, edit, delete
 - **Dashboard** – quick stats and recent activity
+- **Summarizer** – auto-generate an extractive summary of any note's text content
+- **Export** – download notes as Markdown (`.md`), PDF (`.pdf`), or Word (`.docx`)
+- **Collaboration** – share notes with other users; view notes shared with you
 - **Responsive UI** – Bootstrap 5 with clean navbar
 
 ---
@@ -24,6 +27,8 @@ Built as a college project using GitHub Student Developer Pack (DigitalOcean hos
 | Static files | WhiteNoise |
 | Config | django-environ |
 | WSGI server | Gunicorn |
+| PDF export | fpdf2 |
+| DOCX export | python-docx |
 | Lint | Ruff |
 
 ---

@@ -1,58 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Summarise – {{ note.title }} – NoteNest{% endblock %}
+{% block title %}Summarize – {{ note.title }} – NoteNest{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-8">
     <a href="{% url 'notes:detail' note.pk %}" class="btn btn-sm btn-outline-secondary mb-3">
       <i class="bi bi-arrow-left me-1"></i>Back to Note
     </a>
-
-    <div class="card mb-4">
+    <div class="card">
       <div class="card-header">
-        <h5 class="mb-0">
-          <i class="bi bi-file-text me-2"></i>Summarise Note
-        </h5>
+        <h5 class="mb-0"><i class="bi bi-card-text me-2"></i>Summary – {{ note.title }}</h5>
       </div>
       <div class="card-body">
-        <p class="text-muted mb-3">
-          Click the button below to generate a concise summary of
-          <strong>{{ note.title }}</strong> using AI.
-        </p>
-        <form method="post">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-stars me-1"></i>Summarise
-          </button>
-        </form>
+        {% if note.content %}
+          {% if too_short %}
+            <div class="alert alert-info mb-3">
+              <i class="bi bi-info-circle me-1"></i>
+              The note content is too short to summarize further. The full text is shown below.
+            </div>
+            <p class="text-pre-wrap">{{ note.content }}</p>
+          {% elif summary %}
+            <h6 class="fw-semibold mb-2">Auto-generated Summary</h6>
+            <p class="lead">{{ summary }}</p>
+            <hr />
+            <h6 class="fw-semibold text-muted mb-2">Original Content</h6>
+            <p class="text-muted text-pre-wrap">{{ note.content }}</p>
+          {% else %}
+            <p class="text-muted">The content is too short to summarize.</p>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-warning mb-0">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            This note has no text content. Add content when editing the note to enable summarization.
+          </div>
+        {% endif %}
       </div>
     </div>
-
-    {% if error %}
-      <div class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle me-1"></i>{{ error }}
-      </div>
-    {% endif %}
-
-    {% if summary is not None %}
-      {% if summary %}
-        <div class="card">
-          <div class="card-header">
-            <h6 class="mb-0">
-              <i class="bi bi-card-text me-2"></i>Summary
-            </h6>
-          </div>
-          <div class="card-body">
-            <p class="mb-0">{{ summary }}</p>
-          </div>
-        </div>
-      {% else %}
-        <div class="alert alert-info">
-          <i class="bi bi-info-circle me-1"></i>
-          No summary could be generated. Make sure your note file contains sufficient text.
-        </div>
-      {% endif %}
-    {% endif %}
-
   </div>
 </div>
 {% endblock %}

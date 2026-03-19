@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}{{ note.title }} – Shared – NoteNest{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <a href="{% url 'notes:shared_with_me' %}" class="btn btn-sm btn-outline-secondary mb-3">
+      <i class="bi bi-arrow-left me-1"></i>Back to Shared Notes
+    </a>
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ note.title }}</h5>
+        <span class="badge bg-info text-dark">Shared with you</span>
+      </div>
+      <div class="card-body">
+        <dl class="row">
+          <dt class="col-sm-3">Subject</dt>
+          <dd class="col-sm-9">{{ note.subject }}</dd>
+
+          <dt class="col-sm-3">Semester</dt>
+          <dd class="col-sm-9">{{ note.subject.semester }}</dd>
+
+          <dt class="col-sm-3">Tags</dt>
+          <dd class="col-sm-9">
+            {% for tag in note.tag_list %}
+              <span class="badge bg-light text-dark border">{{ tag }}</span>
+            {% empty %}
+              <span class="text-muted">—</span>
+            {% endfor %}
+          </dd>
+
+          <dt class="col-sm-3">Shared by</dt>
+          <dd class="col-sm-9">{{ note.uploaded_by.username }}</dd>
+
+          <dt class="col-sm-3">Created</dt>
+          <dd class="col-sm-9">{{ note.created_at|date:"d M Y, H:i" }}</dd>
+
+          {% if note.file %}
+          <dt class="col-sm-3">File</dt>
+          <dd class="col-sm-9">
+            <a href="{{ note.file.url }}" class="btn btn-sm btn-outline-primary" download>
+              <i class="bi bi-download me-1"></i>Download
+            </a>
+          </dd>
+          {% endif %}
+        </dl>
+
+        {% if note.content %}
+        <hr />
+        <h6 class="fw-semibold">Content</h6>
+        <p class="text-pre-wrap">{{ note.content }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
