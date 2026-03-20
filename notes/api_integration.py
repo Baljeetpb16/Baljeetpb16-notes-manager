@@ -8,7 +8,7 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 # Model used for question generation (free, public Hugging Face model).
-HF_MODEL = "vblagoje/bart_lfqa"
+HF_MODEL = "google/flan-t5-large"
 HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
 
 # Model used for text summarization (free, public Hugging Face model).
