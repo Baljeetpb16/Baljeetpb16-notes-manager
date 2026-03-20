@@ -1,136 +1,80 @@
-"""Send text to the Hugging Face Inference API and retrieve generated questions or summaries."""
+"""Send text to the Google Gemini API and retrieve generated questions or summaries."""
 
 import logging
-
 import requests
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Model used for question generation (free, public Hugging Face model).
-HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.1"
-HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
-
-# Model used for text summarization (free, public Hugging Face model).
-HF_SUMMARIZATION_MODEL = "facebook/bart-large-cnn"
-HF_SUMMARIZATION_URL = f"https://api-inference.huggingface.co/models/{HF_SUMMARIZATION_MODEL}"
-
-# Maximum number of characters of source text to send in a single request.
 MAX_TEXT_LENGTH = 1500
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
-# Timeout for the HTTP request (seconds).
-REQUEST_TIMEOUT = 30
+
+def _call_gemini(prompt: str) -> str:
+    """Send a prompt to Gemini and return the response text."""
+    api_key = getattr(settings, "GEMINI_API_KEY", "")
+    if not api_key:
+        raise RuntimeError(
+            "GEMINI_API_KEY is not configured. "
+            "Add it to your environment variables to use AI features."
+        )
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
+
+    try:
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={api_key}",
+            json=payload,
+            timeout=30,
+        )
+        response.raise_for_status()
+    except requests.RequestException as exc:
+        logger.error("Gemini API request failed: %s", exc)
+        raise RuntimeError(f"API request failed: {exc}") from exc
+
+    data = response.json()
+    try:
+        return data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError):
+        return ""
 
 
 def generate_questions_from_text(text: str) -> list[str]:
-    """Call the Hugging Face Inference API and return a list of question strings.
-
-    The function trims *text* to ``MAX_TEXT_LENGTH`` characters before sending
-    to stay within model limits.
-
-    Raises ``RuntimeError`` if the API key is missing or the request fails.
-    """
-    api_key = getattr(settings, "HUGGINGFACE_API_KEY", "")
-    if not api_key:
-        raise RuntimeError(
-            "HUGGINGFACE_API_KEY is not configured. "
-            "Add it to your .env file to use the question-generation feature."
-        )
-
+    """Call Gemini API and return a list of question strings."""
     trimmed = text[:MAX_TEXT_LENGTH].strip()
     if not trimmed:
         return []
 
     prompt = (
-        "Generate a numbered list of important exam questions based on the "
-        f"following notes:\n\n{trimmed}"
+        "Generate a numbered list of 10 important exam questions based on "
+        f"the following notes:\n\n{trimmed}"
     )
 
-    headers = {"Authorization": f"Bearer {api_key}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 300,
-            "do_sample": False,
-        },
-    }
-
-    try:
-        response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=REQUEST_TIMEOUT)
-        response.raise_for_status()
-    except requests.RequestException as exc:
-        logger.error("Hugging Face API request failed: %s", exc)
-        raise RuntimeError(f"API request failed: {exc}") from exc
-
-    data = response.json()
-
-    # The API returns a list of dicts with a "generated_text" key.
-    if isinstance(data, list) and data:
-        raw = data[0].get("generated_text", "")
-    elif isinstance(data, dict):
-        raw = data.get("generated_text", "")
-    else:
-        raw = ""
-
+    raw = _call_gemini(prompt)
     return _parse_questions(raw)
 
 
 def summarize_text(text: str) -> str:
-    """Call the Hugging Face Inference API and return a summary string.
-
-    Uses the ``facebook/bart-large-cnn`` model which is free and publicly
-    available on Hugging Face.  The function trims *text* to
-    ``MAX_TEXT_LENGTH`` characters before sending to stay within model limits.
-
-    Raises ``RuntimeError`` if the API key is missing or the request fails.
-    """
-    api_key = getattr(settings, "HUGGINGFACE_API_KEY", "")
-    if not api_key:
-        raise RuntimeError(
-            "HUGGINGFACE_API_KEY is not configured. "
-            "Add it to your .env file to use the summarization feature."
-        )
-
+    """Call Gemini API and return a summary string."""
     trimmed = text[:MAX_TEXT_LENGTH].strip()
     if not trimmed:
         return ""
 
-    headers = {"Authorization": f"Bearer {api_key}"}
-    payload = {
-        "inputs": trimmed,
-        "parameters": {
-            "max_length": 200,
-            "min_length": 30,
-            "do_sample": False,
-        },
-    }
+    prompt = (
+        "Summarize the following notes in 3-5 clear sentences:\n\n{trimmed}"
+    ).format(trimmed=trimmed)
 
-    try:
-        response = requests.post(
-            HF_SUMMARIZATION_URL, headers=headers, json=payload, timeout=REQUEST_TIMEOUT
-        )
-        response.raise_for_status()
-    except requests.RequestException as exc:
-        logger.error("Hugging Face summarization API request failed: %s", exc)
-        raise RuntimeError(f"API request failed: {exc}") from exc
-
-    data = response.json()
-
-    if isinstance(data, list) and data:
-        return data[0].get("summary_text", "")
-    if isinstance(data, dict):
-        return data.get("summary_text", "")
-    return ""
+    return _call_gemini(prompt)
 
 
 def _parse_questions(text: str) -> list[str]:
-    """Split *text* into individual question strings."""
+    """Split text into individual question strings."""
     questions = []
     for line in text.splitlines():
         line = line.strip()
-        # Keep lines that look like numbered questions or end with "?"
         if line and (line[0:1].isdigit() or line.endswith("?")):
-            # Strip leading numbering like "1." or "1)"
             for sep in (". ", ") ", ": "):
                 if sep in line[:4]:
                     line = line.split(sep, 1)[-1].strip()
