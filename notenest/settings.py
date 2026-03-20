@@ -110,3 +110,4 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 
 # Hugging Face Inference API key (optional – leave blank to skip AI question generation)
 HUGGINGFACE_API_KEY = env("HUGGINGFACE_API_KEY", default="")
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
