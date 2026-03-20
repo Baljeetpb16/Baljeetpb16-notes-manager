@@ -1,6 +1,7 @@
 """Send text to the Google Gemini API and retrieve generated questions or summaries."""
 
 import logging
+
 import requests
 from django.conf import settings
 
@@ -19,9 +20,7 @@ def _call_gemini(prompt: str) -> str:
             "Add it to your environment variables to use AI features."
         )
 
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}]
-    }
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
     try:
         response = requests.post(
@@ -62,9 +61,7 @@ def summarize_text(text: str) -> str:
     if not trimmed:
         return ""
 
-    prompt = (
-        "Summarize the following notes in 3-5 clear sentences:\n\n{trimmed}"
-    ).format(trimmed=trimmed)
+    prompt = f"Summarize the following notes in 3-5 clear sentences:\n\n{trimmed}"
 
     return _call_gemini(prompt)
 
